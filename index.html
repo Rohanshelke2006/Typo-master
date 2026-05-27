@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typo-Master | Speed Test</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Typo-Master</h1>
+            <p>Master your keystrokes</p>
+        </header>
+
+        <div class="test-area">
+            <div id="word-display" class="word-box"></div>
+            <div class="input-section">
+                <input type="text" id="word-input" autofocus autocomplete="off" placeholder="Start typing here...">
+                <div id="timer">60</div>
+                <button id="reset-btn">⟳</button>
+            </div>
+        </div>
+
+        <div class="results-bar" id="results">
+            <div class="stat-box">
+                <span class="label">WPM</span>
+                <span id="wpm-val" class="value">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="label">Accuracy</span>
+                <span id="accuracy-val" class="value">0%</span>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

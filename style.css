@@ -1,0 +1,101 @@
+:root {
+    --bg-color: #131314;
+    --card-color: #1e1f20;
+    --accent-blue: #8ab4f8;
+    --text-main: #e3e3e3;
+    --text-dim: #c4c7c5;
+    --correct: #81c995;
+    --wrong: #f28b82;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    width: 90%;
+    max-width: 800px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    color: var(--accent-blue);
+    margin-bottom: 5px;
+}
+
+.word-box {
+    background: var(--card-color);
+    padding: 25px;
+    border-radius: 12px;
+    font-size: 1.5rem;
+    line-height: 2;
+    text-align: left;
+    height: 120px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    border: 1px solid #444746;
+}
+
+.word { margin-right: 12px; color: var(--text-dim); }
+.current-word { text-decoration: underline; color: var(--text-main); }
+.correct { color: var(--correct) !important; }
+.wrong { color: var(--wrong) !important; }
+
+.input-section {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+#word-input {
+    flex: 1;
+    background: var(--card-color);
+    border: 2px solid #444746;
+    border-radius: 8px;
+    padding: 15px;
+    color: white;
+    font-size: 1.2rem;
+    outline: none;
+}
+
+#word-input:focus { border-color: var(--accent-blue); }
+
+#timer {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--accent-blue);
+    min-width: 50px;
+}
+
+#reset-btn {
+    background: var(--card-color);
+    border: 1px solid #444746;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.5rem;
+}
+
+#reset-btn:hover { background: #333537; }
+
+.results-bar {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 30px;
+    background: var(--card-color);
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.stat-box .label { display: block; color: var(--text-dim); font-size: 0.9rem; }
+.stat-box .value { font-size: 2rem; font-weight: bold; color: var(--accent-blue); }
