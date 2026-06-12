@@ -1,83 +1,97 @@
-const dictionary = [
-    "the", "of", "to", "and", "a", "in", "is", "it", "you", "that", "he", "was", "for", "on", "are", "as", "with", "his", "they", "I",
-    "at", "be", "this", "have", "from", "or", "one", "had", "by", "word", "but", "not", "what", "all", "were", "we", "when", "your", "can", "said",
-    "there", "use", "an", "each", "which", "she", "do", "how", "their", "if", "will", "up", "other", "about", "out", "many", "then", "them", "these", "so",
-    "some", "her", "would", "make", "like", "him", "into", "time", "has", "look", "two", "more", "write", "go", "see", "number", "no", "way", "could", "people",
-    "my", "than", "first", "water", "been", "call", "who", "oil", "its", "now", "find", "long", "down", "day", "did", "get", "come", "made", "may", "part"
+// ---- Large word dictionary (200+ common words) ----
+const wordBank = [
+    "the","be","to","of","and","a","in","that","have","it","for","not","on","with","he","as","you","do","at",
+    "this","but","his","by","from","they","we","say","her","she","or","an","will","my","one","all","would","there","their","what",
+    "so","up","out","if","about","who","get","which","go","me","when","make","can","like","time","no","just","him","know","take",
+    "people","into","year","your","good","some","could","them","see","other","than","then","now","look","only","come","its","over","think","also",
+    "back","after","use","two","how","our","work","first","well","way","even","new","want","because","any","these","give","day","most","us",
+    "is","water","long","find","here","thing","great","little","own","under","name","very","through","just","form","sentence","large","spell","add","even",
+    "land","here","must","big","high","such","follow","act","why","ask","men","change","went","light","kind","off","need","house","picture","try",
+    "again","animal","point","mother","world","near","build","self","earth","father","head","stand","own","page","should","country","found","answer","school","grow",
+    "study","still","learn","plant","cover","food","sun","four","between","state","keep","eye","never","last","let","thought","city","tree","cross","farm",
+    "hard","start","might","story","saw","far","sea","draw","left","late","run","don't","while","press","close","night","real","life","few","north",
+    "open","seem","together","next","white","children","begin","got","walk","example","ease","paper","group","always","music","those","both","mark","often","letter",
+    "until","mile","river","car","feet","care","second","book","carry","took","science","eat","room","friend","began","idea","fish","mountain","stop","once",
+    "base","hear","horse","cut","sure","watch","color","face","wood","main","enough","plain","girl","usual","young","ready","above","ever","red","list",
+    "though","feel","talk","bird","soon","body","dog","family","direct","pose","leave","song","measure","door","product","black","short","numeral","class","wind"
 ];
 
-let wordList = [];
 let timeLeft = 60;
+let totalTime = 60;
 let timer = null;
-let isStarted = false;
-
-// Variables tracking letter-by-letter positioning
+let wordsTyped = 0;
+let correctWords = 0;
+let wrongWords = 0;
 let currentWordIndex = 0;
-let currentCharacterIndex = 0;
-let totalTypedCharacters = 0;
-let correctCharacters = 0;
+let isStarted = false;
+let isFinished = false;
+let currentWordList = [];
 
 const wordDisplay = document.getElementById('word-display');
-const wordsContainer = document.getElementById('words-container');
-const caret = document.getElementById('caret');
 const wordInput = document.getElementById('word-input');
 const timerDisplay = document.getElementById('timer');
 const wpmDisplay = document.getElementById('wpm-val');
 const accuracyDisplay = document.getElementById('accuracy-val');
+const correctDisplay = document.getElementById('correct-val');
+const wrongDisplay = document.getElementById('wrong-val');
 const resetBtn = document.getElementById('reset-btn');
+const modeButtons = document.querySelectorAll('.mode-btn');
 
-// Fetch random items from dictionary array
-function getRandomWord() {
-    return dictionary[Math.floor(Math.random() * dictionary.length)];
+// Pick how many words we need (generous buffer so we never run out mid-test)
+function getWordCount() {
+    return Math.max(60, totalTime * 4);
 }
 
-// Appends words to ensure the DOM always stays ahead of 80+ WPM speeds
-function addWordsToBuffer(amount = 30) {
-    for (let i = 0; i < amount; i++) {
-        const wordText = getRandomWord();
-        wordList.push(wordText);
-
-        const wordSpan = document.createElement('span');
-        wordSpan.classList.add('word');
-
-        // Split words into individual letter elements for character tracking
-        for (let j = 0; j < wordText.length; j++) {
-            const letterSpan = document.createElement('span');
-            letterSpan.innerText = wordText[j];
-            letterSpan.classList.add('letter');
-            wordSpan.appendChild(letterSpan);
-        }
-
-        wordsContainer.appendChild(wordSpan);
+// Build a fresh random list of words from the dictionary (with repeats allowed)
+function generateWordList(count) {
+    const list = [];
+    for (let i = 0; i < count; i++) {
+        const randIndex = Math.floor(Math.random() * wordBank.length);
+        list.push(wordBank[randIndex]);
     }
+    return list;
+}
+
+function renderWords() {
+    wordDisplay.innerHTML = "";
+    currentWordList.forEach((word, index) => {
+        const span = document.createElement('span');
+        span.innerText = word;
+        span.classList.add('word');
+        if (index === 0) span.classList.add('current-word');
+        wordDisplay.appendChild(span);
+    });
+}
+
+function appendMoreWords(count) {
+    const extra = generateWordList(count);
+    currentWordList = currentWordList.concat(extra);
+    extra.forEach(word => {
+        const span = document.createElement('span');
+        span.innerText = word;
+        span.classList.add('word');
+        wordDisplay.appendChild(span);
+    });
 }
 
 function initGame() {
-    clearInterval(timer);
-    timeLeft = 60;
-    isStarted = false;
-    currentWordIndex = 0;
-    currentCharacterIndex = 0;
-    totalTypedCharacters = 0;
-    correctCharacters = 0;
-    wordList = [];
-
+    timeLeft = totalTime;
     timerDisplay.innerText = timeLeft;
+    wordsTyped = 0;
+    correctWords = 0;
+    wrongWords = 0;
+    currentWordIndex = 0;
+    isStarted = false;
+    isFinished = false;
+    clearInterval(timer);
+    wordInput.disabled = false;
+    wordInput.value = "";
     wpmDisplay.innerText = "0";
     accuracyDisplay.innerText = "0%";
-    wordInput.value = "";
-    wordInput.disabled = false;
-    wordsContainer.innerHTML = "";
-    wordsContainer.style.transform = "translateY(0px)"; // Reset scroll
-
-    // Build the initial list
-    addWordsToBuffer(50);
-    
-    // Set active visibility modifiers on first word
-    wordsContainer.children[0].classList.add('current-word');
-    
-    // Allow engine processing time before positioning cursor
-    setTimeout(updateCaretPosition, 10);
+    correctDisplay.innerText = "0";
+    wrongDisplay.innerText = "0";
+    currentWordList = generateWordList(getWordCount());
+    renderWords();
     wordInput.focus();
 }
 
@@ -87,131 +101,93 @@ function startTimer() {
     timer = setInterval(() => {
         timeLeft--;
         timerDisplay.innerText = timeLeft;
-        calculateStats();
-        if (timeLeft === 0) endGame();
+        if (timeLeft <= 0) endGame();
     }, 1000);
 }
 
-function calculateStats() {
-    const timeElapsed = 60 - timeLeft;
-    if (timeElapsed > 0) {
-        // Standard net WPM speed calculation based on standard 5 character word size metric
-        const wpm = Math.round((correctCharacters / 5) / (timeElapsed / 60));
-        wpmDisplay.innerText = Math.max(0, wpm);
-    }
-    const accuracy = totalTypedCharacters > 0 ? Math.round((correctCharacters / totalTypedCharacters) * 100) : 0;
+function endGame() {
+    if (isFinished) return;
+    isFinished = true;
+    clearInterval(timer);
+    wordInput.disabled = true;
+
+    const minutes = totalTime / 60;
+    const wpm = Math.round(correctWords / minutes);
+    const accuracy = wordsTyped > 0 ? Math.round((correctWords / wordsTyped) * 100) : 0;
+
+    wpmDisplay.innerText = wpm;
     accuracyDisplay.innerText = accuracy + "%";
+    correctDisplay.innerText = correctWords;
+    wrongDisplay.innerText = wrongWords;
 }
 
-function updateCaretPosition() {
-    const currentWordElement = wordsContainer.children[currentWordIndex];
-    if (!currentWordElement) return;
-
-    const letters = currentWordElement.querySelectorAll('.letter');
-    let targetLeft, targetTop;
-
-    if (currentCharacterIndex < letters.length) {
-        // Position cursor right before the active letter
-        const activeLetter = letters[currentCharacterIndex];
-        targetLeft = activeLetter.offsetLeft;
-        targetTop = activeLetter.offsetTop;
-    } else {
-        // Position cursor right after the final letter of a word if typed completely
-        const lastLetter = letters[letters.length - 1];
-        targetLeft = lastLetter.offsetLeft + lastLetter.offsetWidth;
-        targetTop = lastLetter.offsetTop;
-    }
-
-    caret.style.left = `${targetLeft}px`;
-    caret.style.top = `${targetTop}px`;
-
-    // ROW AUTOMATIC SCROLL LOGIC
-    // Shifts the wrapper up when text descends past baseline boundaries
-    const rowOffset = targetTop;
-    if (rowOffset > 45) {
-        wordsContainer.style.transform = `translateY(-${rowOffset - 10}px)`;
-    } else {
-        wordsContainer.style.transform = "translateY(0px)";
+function scrollWordsIntoView(activeSpan) {
+    const boxTop = wordDisplay.getBoundingClientRect().top;
+    const spanTop = activeSpan.getBoundingClientRect().top;
+    const diff = spanTop - boxTop;
+    const lineHeight = parseFloat(getComputedStyle(wordDisplay).lineHeight);
+    if (diff >= lineHeight * 2) {
+        wordDisplay.scrollTop += lineHeight;
     }
 }
 
 wordInput.addEventListener('input', (e) => {
+    if (isFinished) return;
     startTimer();
 
-    const currentWordElement = wordsContainer.children[currentWordIndex];
-    const letters = currentWordElement.querySelectorAll('.letter');
-    const inputValue = wordInput.value;
+    const spans = wordDisplay.querySelectorAll('span');
+    const inputVal = wordInput.value;
 
-    // Check if user submitted the current word via spacebar
-    if (inputValue.endsWith(' ')) {
-        const typedWordValue = inputValue.trim();
-        
-        // Block empty submissions via space spamming
-        if (typedWordValue === "") {
-            wordInput.value = "";
-            return;
-        }
-
-        // Clean up remaining characters left untyped
-        for (let i = currentCharacterIndex; i < letters.length; i++) {
-            letters[i].classList.add('wrong');
-            totalTypedCharacters++;
-        }
-
-        // Transition active structural metrics to next line element block
-        currentWordElement.classList.remove('current-word');
-        currentWordIndex++;
-        currentCharacterIndex = 0;
-
-        // INFINITE EXPANSION TRIGGER
-        // If approaching the end of the loaded text grid, generate more words
-        if (currentWordIndex >= wordsContainer.children.length - 15) {
-            addWordsToBuffer(25);
-        }
-
-        wordsContainer.children[currentWordIndex].classList.add('current-word');
-        wordInput.value = "";
-        updateCaretPosition();
-        calculateStats();
-        return;
-    }
-
-    // REALTIME CHARACTER EVALUATION LOOP
-    const typedLength = inputValue.length;
-    currentCharacterIndex = typedLength;
-
-    letters.forEach((letterSpan, idx) => {
-        if (idx < typedLength) {
-            // Letter has been typed
-            if (inputValue[idx] === letterSpan.innerText) {
-                if (!letterSpan.classList.contains('correct') && !letterSpan.classList.contains('wrong')) {
-                    correctCharacters++;
-                    totalTypedCharacters++;
-                }
-                letterSpan.classList.add('correct');
-                letterSpan.classList.remove('wrong');
+    if (inputVal.endsWith(" ")) {
+        const typedWord = inputVal.trim();
+        if (typedWord.length > 0) {
+            if (typedWord === currentWordList[currentWordIndex]) {
+                spans[currentWordIndex].classList.add('correct');
+                correctWords++;
             } else {
-                if (!letterSpan.classList.contains('correct') && !letterSpan.classList.contains('wrong')) {
-                    totalTypedCharacters++;
-                }
-                letterSpan.classList.add('wrong');
-                letterSpan.classList.remove('correct');
+                spans[currentWordIndex].classList.add('wrong');
+                wrongWords++;
             }
-        } else {
-            // Letter hasn't been typed yet
-            letterSpan.classList.remove('correct', 'wrong');
-        }
-    });
 
-    updateCaretPosition();
+            spans[currentWordIndex].classList.remove('current-word');
+            currentWordIndex++;
+            wordsTyped++;
+
+            // If we're running low on remaining words, generate more on the fly
+            if (currentWordIndex >= currentWordList.length - 10) {
+                appendMoreWords(getWordCount());
+            }
+
+            const nextSpan = wordDisplay.querySelectorAll('span')[currentWordIndex];
+            if (nextSpan) {
+                nextSpan.classList.add('current-word');
+                scrollWordsIntoView(nextSpan);
+            }
+        }
+        wordInput.value = "";
+    } else {
+        // live feedback while typing the current word
+        const currentSpan = spans[currentWordIndex];
+        const target = currentWordList[currentWordIndex];
+        if (target && target.startsWith(inputVal)) {
+            currentSpan.classList.remove('wrong');
+        } else if (inputVal.length > 0) {
+            currentSpan.classList.add('wrong');
+        }
+    }
 });
 
-function endGame() {
-    clearInterval(timer);
-    wordInput.disabled = true;
-    wordInput.value = "Test Finished!";
-    calculateStats();
-}
+resetBtn.addEventListener('click', () => {
+    initGame();
+});
 
-resetBtn.addEventListener('click', initGame);
-window.addEventListener('load', initGame);
+modeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        modeButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        totalTime = parseInt(btn.dataset.time, 10);
+        initGame();
+    });
+});
+
+initGame();
