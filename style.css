@@ -1,18 +1,17 @@
 :root {
-    --bg-color: #0d0e10;
-    --card-color: #18191c;
-    --accent-blue: #4d90fe;
-    --text-main: #f1f3f4;
-    --text-dim: #606468;
-    --correct: #4caf50;
+    --bg-color: #0e0f11;
+    --card-color: #17191d;
+    --accent-blue: #5294ff;
+    --text-main: #f5f6f7;
+    --text-dim: #54585d;
+    --correct: #4eaf51;
     --wrong: #f44336;
-    --wrong-bg: rgba(244, 67, 54, 0.15);
 }
 
 body {
     background-color: var(--bg-color);
     color: var(--text-main);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -28,129 +27,140 @@ body {
 
 header h1 {
     font-size: 3rem;
-    font-weight: 800;
-    letter-spacing: -1px;
     color: var(--accent-blue);
-    margin-bottom: 2px;
-    text-shadow: 0 4px 12px rgba(77, 144, 254, 0.15);
+    margin-bottom: 5px;
+    font-weight: 800;
 }
 
 header p {
     color: var(--text-dim);
     margin-top: 0;
-    font-size: 1.1rem;
-    margin-bottom: 40px;
+    margin-bottom: 35px;
 }
 
+/* Clear Viewport Framing Window Box */
 .word-box {
     background: var(--card-color);
-    padding: 30px;
+    padding: 25px;
     border-radius: 16px;
-    font-size: 1.62rem;
-    line-height: 1.8;
+    font-size: 1.65rem;
+    line-height: 2;
     text-align: left;
-    height: 100px; /* Locked down cleanly for 2 text line limits */
-    overflow-y: hidden; /* Hidden standard bar, controlled via smooth JS logic */
+    height: 90px; /* Snug frame strictly isolating visible fields to 2 text lines */
+    overflow: hidden; 
     margin-bottom: 25px;
-    border: 1px solid #282a2e;
-    user-select: none;
-    transition: all 0.3s ease;
+    border: 1px solid #25282e;
+    position: relative; /* Context relative reference tag anchor for cursor elements */
 }
 
-.word { 
-    margin-right: 15px; 
-    color: var(--text-dim); 
+/* Smooth Scrolling Container Row wrapper */
+#words-container {
+    display: flex;
+    flex-wrap: wrap;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Makes row scrolling ultra smooth */
+}
+
+.word {
+    margin-right: 16px;
     display: inline-block;
-    border-radius: 4px;
-    transition: color 0.15s ease, background-color 0.15s ease;
+    white-space: nowrap;
 }
 
-/* Enhanced Current Word UI Indicator */
-.current-word { 
-    color: var(--text-main); 
-    position: relative;
-    border-bottom: 3px solid var(--accent-blue);
+/* Clean Letter UI states */
+.letter {
+    color: var(--text-dim);
+    transition: color 0.1s ease;
 }
 
-.correct { color: var(--correct) !important; }
-.wrong { color: var(--wrong) !important; text-decoration: line-through; }
+.letter.correct {
+    color: var(--text-main); /* Monkeytype theme style: typed correct words light up */
+}
 
-/* Real-time typo visual warnings while building a single word */
-.wrong-temporary {
-    background-color: var(--wrong-bg);
+.letter.wrong {
     color: var(--wrong);
+    background-color: rgba(244, 67, 54, 0.12);
+    border-radius: 2px;
+}
+
+/* Floating Real-Time Caret Element styling */
+.caret {
+    position: absolute;
+    width: 2.5px;
+    height: 1.55rem;
+    background-color: var(--accent-blue);
+    border-radius: 4px;
+    transition: left 0.1s cubic-bezier(0.4, 0, 0.2, 1), top 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
 }
 
 .input-section {
     display: flex;
-    gap: 20px;
+    gap: 15px;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 }
 
 #word-input {
     flex: 1;
     background: var(--card-color);
-    border: 2px solid #282a2e;
+    border: 2px solid #25282e;
     border-radius: 12px;
-    padding: 18px;
+    padding: 16px;
     color: white;
-    font-size: 1.3rem;
+    font-size: 1.25rem;
     outline: none;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-#word-input:focus { 
-    border-color: var(--accent-blue); 
-    box-shadow: 0 0 0 4px rgba(77, 144, 254, 0.2);
+#word-input:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 4px rgba(82, 148, 255, 0.15);
 }
 
 #timer {
-    font-size: 1.8rem;
-    font-weight: 700;
+    font-size: 1.7rem;
+    font-weight: bold;
     color: var(--accent-blue);
-    min-width: 60px;
-    font-variant-numeric: tabular-nums; /* Prevents jumping sizes dynamically */
+    min-width: 50px;
 }
 
 #reset-btn {
     background: var(--card-color);
-    border: 2px solid #282a2e;
-    color: var(--text-dim);
-    padding: 12px 22px;
+    border: 1px solid #25282e;
+    color: white;
+    padding: 12px 24px;
     border-radius: 12px;
     cursor: pointer;
-    font-size: 1.5rem;
-    transition: all 0.2s ease;
+    font-size: 1.4rem;
 }
 
-#reset-btn:hover { 
-    background: #222428; 
-    color: white; 
-    border-color: var(--text-dim);
+#reset-btn:hover {
+    background: #202227;
 }
 
 .results-bar {
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
+    gap: 60px;
     background: var(--card-color);
-    padding: 24px;
+    padding: 20px;
     border-radius: 16px;
-    border: 1px solid #282a2e;
+    border: 1px solid #25282e;
 }
 
-.stat-box .label { 
-    display: block; 
-    color: var(--text-dim); 
-    font-size: 1rem; 
+.stat-box .label {
+    display: block;
+    color: var(--text-dim);
+    font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 5px;
 }
 
-.stat-box .value { 
-    font-size: 2.5rem; 
-    font-weight: 800; 
-    color: var(--text-main); 
+.stat-box .value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-blue);
 }
