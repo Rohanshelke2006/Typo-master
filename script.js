@@ -1,193 +1,167 @@
-// ---- Large word dictionary (200+ common words) ----
-const wordBank = [
-    "the","be","to","of","and","a","in","that","have","it","for","not","on","with","he","as","you","do","at",
-    "this","but","his","by","from","they","we","say","her","she","or","an","will","my","one","all","would","there","their","what",
-    "so","up","out","if","about","who","get","which","go","me","when","make","can","like","time","no","just","him","know","take",
-    "people","into","year","your","good","some","could","them","see","other","than","then","now","look","only","come","its","over","think","also",
-    "back","after","use","two","how","our","work","first","well","way","even","new","want","because","any","these","give","day","most","us",
-    "is","water","long","find","here","thing","great","little","own","under","name","very","through","just","form","sentence","large","spell","add","even",
-    "land","here","must","big","high","such","follow","act","why","ask","men","change","went","light","kind","off","need","house","picture","try",
-    "again","animal","point","mother","world","near","build","self","earth","father","head","stand","own","page","should","country","found","answer","school","grow",
-    "study","still","learn","plant","cover","food","sun","four","between","state","keep","eye","never","last","let","thought","city","tree","cross","farm",
-    "hard","start","might","story","saw","far","sea","draw","left","late","run","don't","while","press","close","night","real","life","few","north",
-    "open","seem","together","next","white","children","begin","got","walk","example","ease","paper","group","always","music","those","both","mark","often","letter",
-    "until","mile","river","car","feet","care","second","book","carry","took","science","eat","room","friend","began","idea","fish","mountain","stop","once",
-    "base","hear","horse","cut","sure","watch","color","face","wood","main","enough","plain","girl","usual","young","ready","above","ever","red","list",
-    "though","feel","talk","bird","soon","body","dog","family","direct","pose","leave","song","measure","door","product","black","short","numeral","class","wind"
-];
-
-let timeLeft = 60;
-let totalTime = 60;
-let timer = null;
-let wordsTyped = 0;
-let correctWords = 0;
-let wrongWords = 0;
-let currentWordIndex = 0;
-let isStarted = false;
-let isFinished = false;
-let currentWordList = [];
-
-const wordDisplay = document.getElementById('word-display');
-const wordInput = document.getElementById('word-input');
-const timerDisplay = document.getElementById('timer');
-const wpmDisplay = document.getElementById('wpm-val');
-const accuracyDisplay = document.getElementById('accuracy-val');
-const correctDisplay = document.getElementById('correct-val');
-const wrongDisplay = document.getElementById('wrong-val');
-const resetBtn = document.getElementById('reset-btn');
-const modeButtons = document.querySelectorAll('.mode-btn');
-
-// Pick how many words we need (generous buffer so we never run out mid-test)
-function getWordCount() {
-    return Math.max(60, totalTime * 4);
+:root {
+    --bg-color: #0b0c0e;
+    --card-color: #141619;
+    --accent-blue: #4785ff;
+    --text-main: #f1f2f5;
+    --text-dim: #4c5055;
+    --correct: #43a047;
+    --wrong: #e53935;
 }
 
-// Build a fresh random list of words from the dictionary (with repeats allowed)
-function generateWordList(count) {
-    const list = [];
-    for (let i = 0; i < count; i++) {
-        const randIndex = Math.floor(Math.random() * wordBank.length);
-        list.push(wordBank[randIndex]);
-    }
-    return list;
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: 'Inter', system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
 }
 
-function renderWords() {
-    wordDisplay.innerHTML = "";
-    currentWordList.forEach((word, index) => {
-        const span = document.createElement('span');
-        span.innerText = word;
-        span.classList.add('word');
-        if (index === 0) span.classList.add('current-word');
-        wordDisplay.appendChild(span);
-    });
+.container {
+    width: 90%;
+    max-width: 850px;
+    text-align: center;
 }
 
-function appendMoreWords(count) {
-    const extra = generateWordList(count);
-    currentWordList = currentWordList.concat(extra);
-    extra.forEach(word => {
-        const span = document.createElement('span');
-        span.innerText = word;
-        span.classList.add('word');
-        wordDisplay.appendChild(span);
-    });
+header h1 {
+    font-size: 3rem;
+    color: var(--accent-blue);
+    margin-bottom: 5px;
+    font-weight: 800;
 }
 
-function initGame() {
-    timeLeft = totalTime;
-    timerDisplay.innerText = timeLeft;
-    wordsTyped = 0;
-    correctWords = 0;
-    wrongWords = 0;
-    currentWordIndex = 0;
-    isStarted = false;
-    isFinished = false;
-    clearInterval(timer);
-    wordInput.disabled = false;
-    wordInput.value = "";
-    wpmDisplay.innerText = "0";
-    accuracyDisplay.innerText = "0%";
-    correctDisplay.innerText = "0";
-    wrongDisplay.innerText = "0";
-    currentWordList = generateWordList(getWordCount());
-    renderWords();
-    wordInput.focus();
+header p {
+    color: var(--text-dim);
+    margin-top: 0;
+    margin-bottom: 35px;
 }
 
-function startTimer() {
-    if (isStarted) return;
-    isStarted = true;
-    timer = setInterval(() => {
-        timeLeft--;
-        timerDisplay.innerText = timeLeft;
-        if (timeLeft <= 0) endGame();
-    }, 1000);
+/* Single-row viewport framing system box */
+.word-box {
+    background: var(--card-color);
+    padding: 0 30px;
+    border-radius: 16px;
+    font-size: 1.8rem;
+    height: 80px; 
+    display: flex;
+    align-items: center;
+    overflow: hidden; /* Clips elements safely out of perspective bounds */
+    margin-bottom: 25px;
+    border: 1px solid #1f2226;
+    position: relative;
 }
 
-function endGame() {
-    if (isFinished) return;
-    isFinished = true;
-    clearInterval(timer);
-    wordInput.disabled = true;
-
-    const minutes = totalTime / 60;
-    const wpm = Math.round(correctWords / minutes);
-    const accuracy = wordsTyped > 0 ? Math.round((correctWords / wordsTyped) * 100) : 0;
-
-    wpmDisplay.innerText = wpm;
-    accuracyDisplay.innerText = accuracy + "%";
-    correctDisplay.innerText = correctWords;
-    wrongDisplay.innerText = wrongWords;
+/* Horizontal Ribbon Track */
+#words-container {
+    display: flex;
+    flex-wrap: nowrap; /* CRITICAL FIX: Stops vertical word wrapping completely */
+    transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smooth horizontal panning */
+    will-change: transform;
 }
 
-function scrollWordsIntoView(activeSpan) {
-    const boxTop = wordDisplay.getBoundingClientRect().top;
-    const spanTop = activeSpan.getBoundingClientRect().top;
-    const diff = spanTop - boxTop;
-    const lineHeight = parseFloat(getComputedStyle(wordDisplay).lineHeight);
-    if (diff >= lineHeight * 2) {
-        wordDisplay.scrollTop += lineHeight;
-    }
+.word {
+    margin-right: 22px;
+    display: flex;
+    white-space: nowrap;
 }
 
-wordInput.addEventListener('input', (e) => {
-    if (isFinished) return;
-    startTimer();
+.letter {
+    color: var(--text-dim);
+    transition: color 0.05s ease;
+}
 
-    const spans = wordDisplay.querySelectorAll('span');
-    const inputVal = wordInput.value;
+.letter.correct {
+    color: var(--text-main);
+}
 
-    if (inputVal.endsWith(" ")) {
-        const typedWord = inputVal.trim();
-        if (typedWord.length > 0) {
-            if (typedWord === currentWordList[currentWordIndex]) {
-                spans[currentWordIndex].classList.add('correct');
-                correctWords++;
-            } else {
-                spans[currentWordIndex].classList.add('wrong');
-                wrongWords++;
-            }
+.letter.wrong {
+    color: var(--wrong);
+    background-color: rgba(229, 57, 53, 0.12);
+    border-radius: 2px;
+}
 
-            spans[currentWordIndex].classList.remove('current-word');
-            currentWordIndex++;
-            wordsTyped++;
+/* Cursor Caret tracking line layout styles */
+.caret {
+    position: absolute;
+    width: 3px;
+    height: 1.8rem;
+    background-color: var(--accent-blue);
+    border-radius: 2px;
+    transition: left 0.08s ease; /* Tracks keyboard typing inputs at high speed */
+    animation: blink 1s infinite;
+    z-index: 10;
+}
 
-            // If we're running low on remaining words, generate more on the fly
-            if (currentWordIndex >= currentWordList.length - 10) {
-                appendMoreWords(getWordCount());
-            }
+@keyframes blink {
+    50% { opacity: 0; }
+}
 
-            const nextSpan = wordDisplay.querySelectorAll('span')[currentWordIndex];
-            if (nextSpan) {
-                nextSpan.classList.add('current-word');
-                scrollWordsIntoView(nextSpan);
-            }
-        }
-        wordInput.value = "";
-    } else {
-        // live feedback while typing the current word
-        const currentSpan = spans[currentWordIndex];
-        const target = currentWordList[currentWordIndex];
-        if (target && target.startsWith(inputVal)) {
-            currentSpan.classList.remove('wrong');
-        } else if (inputVal.length > 0) {
-            currentSpan.classList.add('wrong');
-        }
-    }
-});
+.input-section {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 25px;
+}
 
-resetBtn.addEventListener('click', () => {
-    initGame();
-});
+#word-input {
+    flex: 1;
+    background: var(--card-color);
+    border: 2px solid #1f2226;
+    border-radius: 12px;
+    padding: 16px;
+    color: white;
+    font-size: 1.25rem;
+    outline: none;
+}
 
-modeButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        modeButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        totalTime = parseInt(btn.dataset.time, 10);
-        initGame();
-    });
-});
+#word-input:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 4px rgba(71, 133, 255, 0.15);
+}
 
-initGame();
+#timer {
+    font-size: 1.7rem;
+    font-weight: bold;
+    color: var(--accent-blue);
+    min-width: 50px;
+}
+
+#reset-btn {
+    background: var(--card-color);
+    border: 1px solid #1f2226;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1.4rem;
+}
+
+#reset-btn:hover {
+    background: #1c1e22;
+}
+
+.results-bar {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    background: var(--card-color);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #1f2226;
+}
+
+.stat-box .label {
+    display: block;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.stat-box .value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-blue);
+}
