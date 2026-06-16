@@ -1,167 +1,199 @@
-:root {
-    --bg-color: #0b0c0e;
-    --card-color: #141619;
-    --accent-blue: #4785ff;
-    --text-main: #f1f2f5;
-    --text-dim: #4c5055;
-    --correct: #43a047;
-    --wrong: #e53935;
+const dictionary = [
+    "the", "of", "to", "and", "a", "in", "is", "it", "you", "that", "he", "was", "for", "on", "are", "as", "with", "his", "they", "I",
+    "at", "be", "this", "have", "from", "or", "one", "had", "by", "word", "but", "not", "what", "all", "were", "we", "when", "your", "can", "said",
+    "there", "use", "an", "each", "which", "she", "do", "how", "their", "if", "will", "up", "other", "about", "out", "many", "then", "them", "these", "so",
+    "some", "her", "would", "make", "like", "him", "into", "time", "has", "look", "two", "more", "write", "go", "see", "number", "no", "way", "could", "people",
+    "my", "than", "first", "water", "been", "call", "who", "oil", "its", "now", "find", "long", "down", "day", "did", "get", "come", "made", "may", "part"
+];
+
+let wordList = [];
+let timeLeft = 60;
+let timer = null;
+let isStarted = false;
+
+let currentWordIndex = 0;
+let currentCharacterIndex = 0;
+let totalTypedCharacters = 0;
+let correctCharacters = 0;
+
+const wordDisplay = document.getElementById('word-display');
+const wordsContainer = document.getElementById('words-container');
+const caret = document.getElementById('caret');
+const wordInput = document.getElementById('word-input');
+const timerDisplay = document.getElementById('timer');
+const wpmDisplay = document.getElementById('wpm-val');
+const accuracyDisplay = document.getElementById('accuracy-val');
+const resetBtn = document.getElementById('reset-btn');
+
+function getRandomWord() {
+    return dictionary[Math.floor(Math.random() * dictionary.length)];
 }
 
-body {
-    background-color: var(--bg-color);
-    color: var(--text-main);
-    font-family: 'Inter', system-ui, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
+function addWordsToBuffer(amount = 30) {
+    for (let i = 0; i < amount; i++) {
+        const wordText = getRandomWord();
+        wordList.push(wordText);
+
+        const wordSpan = document.createElement('span');
+        wordSpan.classList.add('word');
+
+        for (let j = 0; j < wordText.length; j++) {
+            const letterSpan = document.createElement('span');
+            letterSpan.innerText = wordText[j];
+            letterSpan.classList.add('letter');
+            wordSpan.appendChild(letterSpan);
+        }
+        wordsContainer.appendChild(wordSpan);
+    }
 }
 
-.container {
-    width: 90%;
-    max-width: 850px;
-    text-align: center;
+function initGame() {
+    clearInterval(timer);
+    timeLeft = 60;
+    isStarted = false;
+    currentWordIndex = 0;
+    currentCharacterIndex = 0;
+    totalTypedCharacters = 0;
+    correctCharacters = 0;
+    wordList = [];
+
+    timerDisplay.innerText = timeLeft;
+    wpmDisplay.innerText = "0";
+    accuracyDisplay.innerText = "0%";
+    wordInput.value = "";
+    wordInput.disabled = false;
+    wordsContainer.innerHTML = "";
+    
+    // Reset horizontal position back to zero
+    wordsContainer.style.transform = "translateX(0px)";
+
+    addWordsToBuffer(60);
+    wordsContainer.children[0].classList.add('current-word');
+    
+    setTimeout(updateCaretPosition, 10);
+    wordInput.focus();
 }
 
-header h1 {
-    font-size: 3rem;
-    color: var(--accent-blue);
-    margin-bottom: 5px;
-    font-weight: 800;
+function startTimer() {
+    if (isStarted) return;
+    isStarted = true;
+    timer = setInterval(() => {
+        timeLeft--;
+        timerDisplay.innerText = timeLeft;
+        calculateStats();
+        if (timeLeft === 0) endGame();
+    }, 1000);
 }
 
-header p {
-    color: var(--text-dim);
-    margin-top: 0;
-    margin-bottom: 35px;
+function calculateStats() {
+    const timeElapsed = 60 - timeLeft;
+    if (timeElapsed > 0) {
+        const wpm = Math.round((correctCharacters / 5) / (timeElapsed / 60));
+        wpmDisplay.innerText = Math.max(0, wpm);
+    }
+    const accuracy = totalTypedCharacters > 0 ? Math.round((correctCharacters / totalTypedCharacters) * 100) : 0;
+    accuracyDisplay.innerText = accuracy + "%";
 }
 
-/* Single-row viewport framing system box */
-.word-box {
-    background: var(--card-color);
-    padding: 0 30px;
-    border-radius: 16px;
-    font-size: 1.8rem;
-    height: 80px; 
-    display: flex;
-    align-items: center;
-    overflow: hidden; /* Clips elements safely out of perspective bounds */
-    margin-bottom: 25px;
-    border: 1px solid #1f2226;
-    position: relative;
+function updateCaretPosition() {
+    const currentWordElement = wordsContainer.children[currentWordIndex];
+    if (!currentWordElement) return;
+
+    const letters = currentWordElement.querySelectorAll('.letter');
+    let targetLeft;
+
+    if (currentCharacterIndex < letters.length) {
+        const activeLetter = letters[currentCharacterIndex];
+        targetLeft = activeLetter.offsetLeft;
+    } else {
+        const lastLetter = letters[letters.length - 1];
+        targetLeft = lastLetter.offsetLeft + lastLetter.offsetWidth;
+    }
+
+    // Caret moves across the line relative to container's active layout placement
+    caret.style.left = `${targetLeft}px`;
+    
+    // STEP-BY-STEP TRACKING MOTOR:
+    // If your caret crosses past 200px from the left boundary, 
+    // shift the word track left in perfect sync with your keystrokes.
+    const trackingThreshold = 200;
+    if (targetLeft > trackingThreshold) {
+        wordsContainer.style.transform = `translateX(-${targetLeft - trackingThreshold}px)`;
+        caret.style.left = `${trackingThreshold}px`; // Pin caret in place visually while stream rolls
+    } else {
+        wordsContainer.style.transform = "translateX(0px)";
+    }
 }
 
-/* Horizontal Ribbon Track */
-#words-container {
-    display: flex;
-    flex-wrap: nowrap; /* CRITICAL FIX: Stops vertical word wrapping completely */
-    transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smooth horizontal panning */
-    will-change: transform;
+wordInput.addEventListener('input', (e) => {
+    startTimer();
+
+    const currentWordElement = wordsContainer.children[currentWordIndex];
+    const letters = currentWordElement.querySelectorAll('.letter');
+    const inputValue = wordInput.value;
+
+    if (inputValue.endsWith(' ')) {
+        const typedWordValue = inputValue.trim();
+        
+        if (typedWordValue === "") {
+            wordInput.value = "";
+            return;
+        }
+
+        // Catch missing letters if skipped
+        for (let i = currentCharacterIndex; i < letters.length; i++) {
+            letters[i].classList.add('wrong');
+            totalTypedCharacters++;
+        }
+
+        currentWordElement.classList.remove('current-word');
+        currentWordIndex++;
+        currentCharacterIndex = 0;
+
+        if (currentWordIndex >= wordsContainer.children.length - 15) {
+            addWordsToBuffer(30);
+        }
+
+        wordsContainer.children[currentWordIndex].classList.add('current-word');
+        wordInput.value = "";
+        updateCaretPosition();
+        calculateStats();
+        return;
+    }
+
+    const typedLength = inputValue.length;
+    currentCharacterIndex = typedLength;
+
+    letters.forEach((letterSpan, idx) => {
+        if (idx < typedLength) {
+            if (inputValue[idx] === letterSpan.innerText) {
+                if (!letterSpan.classList.contains('correct') && !letterSpan.classList.contains('wrong')) {
+                    correctCharacters++;
+                    totalTypedCharacters++;
+                }
+                letterSpan.classList.add('correct');
+                letterSpan.classList.remove('wrong');
+            } else {
+                if (!letterSpan.classList.contains('correct') && !letterSpan.classList.contains('wrong')) {
+                    totalTypedCharacters++;
+                }
+                letterSpan.classList.add('wrong');
+                letterSpan.classList.remove('correct');
+            }
+        } else {
+            letterSpan.classList.remove('correct', 'wrong');
+        }
+    });
+
+    updateCaretPosition();
+});
+
+function endGame() {
+    clearInterval(timer);
+    wordInput.disabled = true;
+    wordInput.value = "Test Finished!";
+    calculateStats();
 }
 
-.word {
-    margin-right: 22px;
-    display: flex;
-    white-space: nowrap;
-}
-
-.letter {
-    color: var(--text-dim);
-    transition: color 0.05s ease;
-}
-
-.letter.correct {
-    color: var(--text-main);
-}
-
-.letter.wrong {
-    color: var(--wrong);
-    background-color: rgba(229, 57, 53, 0.12);
-    border-radius: 2px;
-}
-
-/* Cursor Caret tracking line layout styles */
-.caret {
-    position: absolute;
-    width: 3px;
-    height: 1.8rem;
-    background-color: var(--accent-blue);
-    border-radius: 2px;
-    transition: left 0.08s ease; /* Tracks keyboard typing inputs at high speed */
-    animation: blink 1s infinite;
-    z-index: 10;
-}
-
-@keyframes blink {
-    50% { opacity: 0; }
-}
-
-.input-section {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    margin-bottom: 25px;
-}
-
-#word-input {
-    flex: 1;
-    background: var(--card-color);
-    border: 2px solid #1f2226;
-    border-radius: 12px;
-    padding: 16px;
-    color: white;
-    font-size: 1.25rem;
-    outline: none;
-}
-
-#word-input:focus {
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 0 4px rgba(71, 133, 255, 0.15);
-}
-
-#timer {
-    font-size: 1.7rem;
-    font-weight: bold;
-    color: var(--accent-blue);
-    min-width: 50px;
-}
-
-#reset-btn {
-    background: var(--card-color);
-    border: 1px solid #1f2226;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 1.4rem;
-}
-
-#reset-btn:hover {
-    background: #1c1e22;
-}
-
-.results-bar {
-    display: flex;
-    justify-content: center;
-    gap: 60px;
-    background: var(--card-color);
-    padding: 20px;
-    border-radius: 16px;
-    border: 1px solid #1f2226;
-}
-
-.stat-box .label {
-    display: block;
-    color: var(--text-dim);
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.stat-box .value {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: var(--accent-blue);
-}
+resetBtn.addEventListener('click', initGame);
+window.addEventListener('load', initGame);
